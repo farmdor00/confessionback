@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const axios = require('axios'); 
+const axios = require('axios');
 const Confession = require('./models/Confession');
 require('dotenv').config();
 
@@ -17,7 +17,7 @@ const HCAPTCHA_SECRET = process.env.CAPTCHA_SECRET;
 
 if (!MONGO_URI || !HCAPTCHA_SECRET) {
   console.error('Error: Missing environment variables.');
-  process.exit(1);  
+  process.exit(1);
 }
 
 mongoose.connect(MONGO_URI).then(() => console.log('Connected to Database')).catch(err => {
@@ -32,16 +32,24 @@ app.post('/confessions', async (req, res) => {
     if (!text) return res.status(400).json({ message: 'Confession text is required' });
     if (!hCaptchaToken) return res.status(400).json({ message: 'Please complete the CAPTCHA' });
 
-    const hCaptchaResponse = await axios.post('https://hcaptcha.com/siteverify', {
-      secret: HCAPTCHA_SECRET,
-      response: hCaptchaToken,
-  });
-  
+    const hCaptchaResponse = await fetch('https://hcaptcha.com/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        secret: HCAPTCHA_SECRET,
+        response: hCaptchaToken,
+      }),
+    });
 
-    if (!hCaptchaResponse.data.success) {
+    const data = await hCaptchaResponse.json();
+
+
+    if (!data.success) {
       return res.status(400).json({
         message: 'Invalid CAPTCHA',
-        errors: hCaptchaResponse.data['error-codes'],
+        errors: data['error-codes'],
       });
     }
 
@@ -57,7 +65,7 @@ app.post('/confessions', async (req, res) => {
 
 app.get('/confessions', async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1; 
+    const page = parseInt(req.query.page) || 1;
     const limit = 15;
 
     const skip = (page - 1) * limit;
