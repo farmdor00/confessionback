@@ -23,7 +23,7 @@ app.post('/confessions', async (req, res) => {
 
     if (!text) return res.status(400).json({ message: 'Confession text is required' });
     if (!hCaptchaToken) return res.status(400).json({ message: 'Complete the captcha' });
-    console.log(hCaptchaToken);
+    console.log(HCAPTCHA_SECRET);
     
     const hCaptchaResponse = await axios.post('https://hcaptcha.com/siteverify', null, {
       params: {
