@@ -23,7 +23,6 @@ app.post('/confessions', async (req, res) => {
 
     if (!text) return res.status(400).json({ message: 'Confession text is required' });
     if (!hCaptchaToken) return res.status(400).json({ message: 'Complete the captcha' });
-    console.log(HCAPTCHA_SECRET);
     
     const hCaptchaResponse = await axios.post('https://hcaptcha.com/siteverify', null, {
       params: {
@@ -31,6 +30,8 @@ app.post('/confessions', async (req, res) => {
         response: hCaptchaToken,
       },
     });
+
+    console.log(hCaptchaResponse.data);
 
     if (!hCaptchaResponse.data.success) {
       return res.status(400).json({ message: 'Invalid Captcha', errors: hCaptchaResponse.data['error-codes'] });
