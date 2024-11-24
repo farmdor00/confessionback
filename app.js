@@ -9,9 +9,7 @@ require('dotenv').config();
 const app = express();
 const PORT = 5000;
 
-app.use(cors({
-  origin: 'https://uvce-confessions.vercel.app/'
-}));
+app.use(cors());
 app.use(bodyParser.json());
 
 const MONGO_URI = `${process.env.URI}`;
