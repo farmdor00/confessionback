@@ -28,8 +28,26 @@ app.post('/confessions', async (req, res) => {
 
 app.get('/confessions', async (req, res) => {
   try {
-    const confessions = await Confession.find().sort({ createdAt: -1 });
-    res.status(200).json(confessions);
+    const page = parseInt(req.query.page) || 1; 
+    const limit = 25;
+
+    const skip = (page - 1) * limit;
+
+    const confessions = await Confession.find()
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const totalConfessions = await Confession.countDocuments();
+
+    res.status(200).json({
+      confessions,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalConfessions / limit),
+        totalConfessions,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
   }
