@@ -2,30 +2,47 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const axios = require('axios'); // Import axios for API requests
 const Confession = require('./models/Confession');
 require('dotenv').config();
 
 const app = express();
 const PORT = 5000;
 
-app.use(cors(
-  {
-    origin : 'https://uvce-confessions.vercel.app/'
-  }
-));
+app.use(cors({
+  origin: 'https://uvce-confessions.vercel.app/'
+}));
 app.use(bodyParser.json());
 
 const MONGO_URI = `${process.env.URI}`;
 mongoose.connect(MONGO_URI).then(() => console.log('Connected to Database'));
 
+const HCAPTCHA_SECRET = process.env.CAPTCHA_SECRET;
+
 app.post('/confessions', async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, hCaptchaToken } = req.body;
+
     if (!text) return res.status(400).json({ message: 'Confession text is required' });
+    if (!hCaptchaToken) return res.status(400).json({ message: 'Complete the captcha' });
+
+    const hCaptchaResponse = await axios.post('https://hcaptcha.com/siteverify', null, {
+      params: {
+        secret: HCAPTCHA_SECRET,
+        response: hCaptchaToken,
+      },
+    });
+
+    if (!hCaptchaResponse.data.success) {
+      return res.status(400).json({ message: 'Invalid Captcha', errors: hCaptchaResponse.data['error-codes'] });
+    }
+
     const confession = new Confession({ text });
     await confession.save();
+
     res.status(201).json({ message: 'Confession saved successfully', confession });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Server error', error });
   }
 });
