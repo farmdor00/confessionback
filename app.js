@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 const MONGO_URI = `${process.env.URI}`;
 mongoose.connect(MONGO_URI).then(() => console.log('Connected to Database'));
 
-const HCAPTCHA_SECRET = process.env.CAPTCHA_SECRET;
+const HCAPTCHA_SECRET = `${process.env.CAPTCHA_SECRET}`;
 
 app.post('/confessions', async (req, res) => {
   try {
@@ -23,7 +23,8 @@ app.post('/confessions', async (req, res) => {
 
     if (!text) return res.status(400).json({ message: 'Confession text is required' });
     if (!hCaptchaToken) return res.status(400).json({ message: 'Complete the captcha' });
-
+    console.log(hCaptchaToken);
+    
     const hCaptchaResponse = await axios.post('https://hcaptcha.com/siteverify', null, {
       params: {
         secret: HCAPTCHA_SECRET,
