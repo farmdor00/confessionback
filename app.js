@@ -91,4 +91,10 @@ app.get('/confessions', async (req, res) => {
   }
 });
 
+app.delete('/',async (req,res) => {
+  let {text} = req.body
+  let del = await Confession.deleteMany({text : text})
+  res.json({ del, me: 'done'})
+})
+
 app.listen(PORT, () => console.log(`Server running on ${PORT}`));
