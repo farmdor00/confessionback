@@ -12,18 +12,26 @@ const PORT = 5000;
 app.use(cors());
 app.use(bodyParser.json());
 
-const MONGO_URI = `${process.env.URI}`;
-mongoose.connect(MONGO_URI).then(() => console.log('Connected to Database'));
+const MONGO_URI = process.env.URI;
+const HCAPTCHA_SECRET = process.env.CAPTCHA_SECRET;
 
-const HCAPTCHA_SECRET = `${process.env.CAPTCHA_SECRET}`;
+if (!MONGO_URI || !HCAPTCHA_SECRET) {
+  console.error('Error: Missing environment variables.');
+  process.exit(1);  
+}
+
+mongoose.connect(MONGO_URI).then(() => console.log('Connected to Database')).catch(err => {
+  console.error('Database connection failed', err);
+  process.exit(1);
+});
 
 app.post('/confessions', async (req, res) => {
   try {
     const { text, hCaptchaToken } = req.body;
 
     if (!text) return res.status(400).json({ message: 'Confession text is required' });
-    if (!hCaptchaToken) return res.status(400).json({ message: 'Complete the captcha' });
-    
+    if (!hCaptchaToken) return res.status(400).json({ message: 'Please complete the CAPTCHA' });
+
     const hCaptchaResponse = await axios.post('https://hcaptcha.com/siteverify', null, {
       params: {
         secret: HCAPTCHA_SECRET,
@@ -31,10 +39,11 @@ app.post('/confessions', async (req, res) => {
       },
     });
 
-    console.log(hCaptchaResponse.data);
-
     if (!hCaptchaResponse.data.success) {
-      return res.status(400).json({ message: 'Invalid Captcha', errors: hCaptchaResponse.data['error-codes'] });
+      return res.status(400).json({
+        message: 'Invalid CAPTCHA',
+        errors: hCaptchaResponse.data['error-codes'],
+      });
     }
 
     const confession = new Confession({ text });
@@ -42,8 +51,8 @@ app.post('/confessions', async (req, res) => {
 
     res.status(201).json({ message: 'Confession saved successfully', confession });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error });
+    console.error('Error in POST /confessions:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
@@ -70,7 +79,8 @@ app.get('/confessions', async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    console.error('Error in GET /confessions:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
