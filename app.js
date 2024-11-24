@@ -8,7 +8,11 @@ require('dotenv').config();
 const app = express();
 const PORT = 5000;
 
-app.use(cors());
+app.use(cors(
+  {
+    origin : 'https://secret213.vercel.app/'
+  }
+));
 app.use(bodyParser.json());
 
 const MONGO_URI = `${process.env.URI}`;
