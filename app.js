@@ -10,7 +10,7 @@ const PORT = 5000;
 
 app.use(cors(
   {
-    origin : 'https://secret213.vercel.app/'
+    origin : 'https://uvce-confessions.vercel.app/'
   }
 ));
 app.use(bodyParser.json());
@@ -52,18 +52,6 @@ app.get('/confessions', async (req, res) => {
         totalConfessions,
       },
     });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
-  }
-});
-
-app.delete('/confessions/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedConfession = await Confession.findByIdAndDelete(id);
-
-    if (!deletedConfession) return res.status(404).json({ message: 'Confession not found' });
-    res.status(200).json({ message: 'Confession deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
   }
