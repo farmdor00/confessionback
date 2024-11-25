@@ -25,13 +25,9 @@ mongoose.connect(MONGO_URI).then(() => console.log('Connected to Database')).cat
   process.exit(1);
 });
 
-const confessionRateLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 5,
-  message: 'Too many requests, please try again later.',
-});
 
-app.post('/confessions', confessionRateLimiter, async (req, res) => {
+
+app.post('/confessions',  async (req, res) => {
   try {
     const { text, hCaptchaToken } = req.body;
 
@@ -71,7 +67,7 @@ app.post('/confessions', confessionRateLimiter, async (req, res) => {
 
 const fetchRateLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 6,
+  max: 12,
   message: 'Too many requests, please try again later.',
 });
 
