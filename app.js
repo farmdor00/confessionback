@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const axios = require('axios');
+const rateLimit = require('express-rate-limit');
 const Confession = require('./models/Confession');
 require('dotenv').config();
 
@@ -25,7 +25,13 @@ mongoose.connect(MONGO_URI).then(() => console.log('Connected to Database')).cat
   process.exit(1);
 });
 
-app.post('/confessions', async (req, res) => {
+const confessionRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: 'Too many requests, please try again later.',
+});
+
+app.post('/confessions', confessionRateLimiter, async (req, res) => {
   try {
     const { text, hCaptchaToken } = req.body;
 
@@ -45,7 +51,6 @@ app.post('/confessions', async (req, res) => {
 
     const data = await hCaptchaResponse.json();
 
-
     if (!data.success) {
       return res.status(400).json({
         message: 'Invalid CAPTCHA',
@@ -63,7 +68,14 @@ app.post('/confessions', async (req, res) => {
   }
 });
 
-app.get('/confessions', async (req, res) => {
+
+const fetchRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 6,
+  message: 'Too many requests, please try again later.',
+});
+
+app.get('/confessions', fetchRateLimiter, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 15;
@@ -90,11 +102,5 @@ app.get('/confessions', async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
-
-app.delete('/',async (req,res) => {
-  let {text} = req.body
-  let del = await Confession.deleteMany({text : text})
-  res.json({ del, me: 'done'})
-})
 
 app.listen(PORT, () => console.log(`Server running on ${PORT}`));
