@@ -25,14 +25,19 @@ mongoose.connect(MONGO_URI).then(() => console.log('Connected to Database')).cat
   process.exit(1);
 });
 
+const confessionRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: 'Too many requests, please try again later.',
+});
 
-
-app.post('/confessions',  async (req, res) => {
+app.post('/confessions', confessionRateLimiter, async (req, res) => {
   try {
     const { text, hCaptchaToken } = req.body;
 
     if (!text) return res.status(400).json({ message: 'Confession text is required' });
     if (!hCaptchaToken) return res.status(400).json({ message: 'Please complete the CAPTCHA' });
+    if (text.length > 300) return res.status(400).json({message: 'Confession text cannot have more than 300 characters'})
 
     const hCaptchaResponse = await fetch('https://hcaptcha.com/siteverify', {
       method: 'POST',
@@ -74,14 +79,13 @@ const fetchRateLimiter = rateLimit({
 app.get('/confessions', fetchRateLimiter, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = 15;
+    const limit = 25;
 
     const skip = (page - 1) * limit;
 
     const confessions = await Confession.find()
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
 
     const totalConfessions = await Confession.countDocuments();
 
