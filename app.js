@@ -86,6 +86,7 @@ app.get('/confessions', fetchRateLimiter, async (req, res) => {
     const confessions = await Confession.find()
       .skip(skip)
       .limit(limit)
+      .reverse()
 
     const totalConfessions = await Confession.countDocuments();
 
