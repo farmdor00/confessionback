@@ -86,7 +86,7 @@ app.get('/confessions', fetchRateLimiter, async (req, res) => {
     let confessions = await Confession.find()
       .skip(skip)
       .limit(limit)
-    confessions = confessions.reverse()
+      .sort({createdAt: -1})
 
     const totalConfessions = await Confession.countDocuments();
 
