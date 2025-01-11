@@ -11,6 +11,7 @@ const PORT = 5000;
 
 app.use(cors());
 app.use(bodyParser.json());
+app.set('trust proxy', 1);
 
 const MONGO_URI = process.env.URI;
 const HCAPTCHA_SECRET = process.env.CAPTCHA_SECRET;
